@@ -1,0 +1,189 @@
+// ============================================================================
+// PRISMA ORM SCHEMA
+// E-Commerce Database Management System (PostgreSQL)
+// Authors / Students:
+//   - Nisha Rathi (24BYB0137)
+//   - Anshul Gupta (24BYB0149)
+// Database Engine: PostgreSQL 14+ / Third Normal Form (3NF)
+// ============================================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------------------------------
+// 1. Categories
+// ----------------------------------------------------------------------------
+model Category {
+  categoryId   Int       @id @default(autoincrement()) @map("category_id")
+  categoryName String    @unique @map("category_name") @db.VarChar(100)
+  description  String?   @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  products     Product[]
+
+  @@map("categories")
+}
+
+// ----------------------------------------------------------------------------
+// 2. Products
+// ----------------------------------------------------------------------------
+model Product {
+  productId   Int         @id @default(autoincrement()) @map("product_id")
+  productName String      @map("product_name") @db.VarChar(150)
+  categoryId  Int         @map("category_id")
+  price       Decimal     @db.Decimal(10, 2)
+  stockQty    Int         @default(0) @map("stock_qty")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  category    Category    @relation(fields: [categoryId], references: [categoryId], onDelete: Restrict, onUpdate: Cascade)
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+
+  @@index([categoryId], map: "idx_products_category")
+  @@index([productName], map: "idx_products_name")
+  @@map("products")
+}
+
+// ----------------------------------------------------------------------------
+// 3. Customers
+// ----------------------------------------------------------------------------
+model Customer {
+  customerId      Int              @id @default(autoincrement()) @map("customer_id")
+  customerName    String           @map("customer_name") @db.VarChar(100)
+  email           String           @unique @db.VarChar(150)
+  phone           String?          @db.VarChar(20)
+  city            String?          @db.VarChar(100)
+  joinDate        DateTime         @default(now()) @map("join_date") @db.Timestamptz()
+  cart            Cart?
+  orders          Order[]
+  reviews         Review[]
+  customerSegment CustomerSegment?
+
+  @@index([city], map: "idx_customers_city")
+  @@index([email], map: "idx_customers_email")
+  @@map("customers")
+}
+
+// ----------------------------------------------------------------------------
+// 4. Carts (Active Mutable Shopping Basket)
+// ----------------------------------------------------------------------------
+model Cart {
+  cartId     Int        @id @default(autoincrement()) @map("cart_id")
+  customerId Int        @unique @map("customer_id")
+  updatedAt  DateTime   @default(now()) @map("updated_at") @db.Timestamptz()
+  customer   Customer   @relation(fields: [customerId], references: [customerId], onDelete: Cascade, onUpdate: Cascade)
+  cartItems  CartItem[]
+
+  @@map("carts")
+}
+
+// ----------------------------------------------------------------------------
+// 5. Cart Items (Active Shopping Line Items)
+// ----------------------------------------------------------------------------
+model CartItem {
+  cartItemId Int     @id @default(autoincrement()) @map("cart_item_id")
+  cartId     Int     @map("cart_id")
+  productId  Int     @map("product_id")
+  quantity   Int     @default(1)
+  cart       Cart    @relation(fields: [cartId], references: [cartId], onDelete: Cascade, onUpdate: Cascade)
+  product    Product @relation(fields: [productId], references: [productId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([cartId, productId], map: "uq_cart_product")
+  @@index([cartId], map: "idx_cart_items_cart")
+  @@index([productId], map: "idx_cart_items_product")
+  @@map("cart_items")
+}
+
+// ----------------------------------------------------------------------------
+// 6. Orders (Immutable Master Purchase Ledgers)
+// ----------------------------------------------------------------------------
+model Order {
+  orderId     Int         @id @default(autoincrement()) @map("order_id")
+  customerId  Int         @map("customer_id")
+  orderDate   DateTime    @default(now()) @map("order_date") @db.Timestamptz()
+  status      String      @default("Placed") @db.VarChar(20)
+  totalAmount Decimal     @default(0.00) @map("total_amount") @db.Decimal(12, 2)
+  customer    Customer    @relation(fields: [customerId], references: [customerId], onDelete: Restrict, onUpdate: Cascade)
+  orderItems  OrderItem[]
+  payment     Payment?
+
+  @@index([customerId], map: "idx_orders_customer")
+  @@index([orderDate], map: "idx_orders_date")
+  @@index([status], map: "idx_orders_status")
+  @@map("orders")
+}
+
+// ----------------------------------------------------------------------------
+// 7. Order Items (Historic Line Items Snapshot)
+// ----------------------------------------------------------------------------
+model OrderItem {
+  orderItemId Int     @id @default(autoincrement()) @map("order_item_id")
+  orderId     Int     @map("order_id")
+  productId   Int     @map("product_id")
+  quantity    Int
+  unitPrice   Decimal @map("unit_price") @db.Decimal(10, 2)
+  order       Order   @relation(fields: [orderId], references: [orderId], onDelete: Cascade, onUpdate: Cascade)
+  product     Product @relation(fields: [productId], references: [productId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([orderId, productId], map: "uq_order_product")
+  @@index([orderId], map: "idx_order_items_order")
+  @@index([productId], map: "idx_order_items_product")
+  @@map("order_items")
+}
+
+// ----------------------------------------------------------------------------
+// 8. Payments (1:1 Settlement Records)
+// ----------------------------------------------------------------------------
+model Payment {
+  paymentId     Int       @id @default(autoincrement()) @map("payment_id")
+  orderId       Int       @unique @map("order_id")
+  method        String    @db.VarChar(30)
+  amount        Decimal   @db.Decimal(12, 2)
+  paymentStatus String    @default("Pending") @map("payment_status") @db.VarChar(20)
+  paymentDate   DateTime? @map("payment_date") @db.Timestamptz()
+  order         Order     @relation(fields: [orderId], references: [orderId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([orderId], map: "idx_payments_order")
+  @@index([paymentStatus], map: "idx_payments_status")
+  @@map("payments")
+}
+
+// ----------------------------------------------------------------------------
+// 9. Reviews (Customer Feedback)
+// ----------------------------------------------------------------------------
+model Review {
+  reviewId   Int      @id @default(autoincrement()) @map("review_id")
+  customerId Int      @map("customer_id")
+  productId  Int      @map("product_id")
+  rating     Int
+  reviewText String?  @map("review_text") @db.VarChar(500)
+  reviewDate DateTime @default(now()) @map("review_date") @db.Timestamptz()
+  customer   Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade, onUpdate: Cascade)
+  product    Product  @relation(fields: [productId], references: [productId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([customerId, productId], map: "uq_customer_product_review")
+  @@index([productId], map: "idx_reviews_product")
+  @@index([customerId], map: "idx_reviews_customer")
+  @@map("reviews")
+}
+
+// ----------------------------------------------------------------------------
+// 10. Customer Segments (Derived Customer Behavior Targets)
+// ----------------------------------------------------------------------------
+model CustomerSegment {
+  customerId    Int      @id @map("customer_id")
+  recencyDays   Int      @map("recency_days")
+  frequency     Int
+  monetaryValue Decimal  @map("monetary_value") @db.Decimal(12, 2)
+  segmentLabel  String   @map("segment_label") @db.VarChar(30)
+  lastUpdated   DateTime @default(now()) @map("last_updated") @db.Timestamptz()
+  customer      Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([segmentLabel], map: "idx_customer_segments_label")
+  @@map("customer_segments")
+}

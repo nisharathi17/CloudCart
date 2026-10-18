@@ -1,0 +1,46 @@
+{
+  "name": "ecommerce-dbms-nextjs-prisma",
+  "version": "1.0.0",
+  "description": "E-Commerce Database Management System with PostgreSQL 3NF, PL/pgSQL Engine Logic, Prisma ORM, and Next.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "prisma:generate": "prisma generate",
+    "prisma:pull": "prisma db pull",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
+    "server:express": "node src/server.js"
+  },
+  "keywords": [
+    "postgresql",
+    "prisma",
+    "nextjs",
+    "dbms",
+    "ecommerce",
+    "3nf"
+  ],
+  "author": "Nisha Rathi (24BYB0137) & Anshul Gupta (24BYB0149)",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.4.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "lucide-react": "^1.16.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.29",
+    "prisma": "^6.4.0",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
+  }
+}
