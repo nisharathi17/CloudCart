@@ -1,4 +1,4 @@
-# Enterprise E-Commerce Database Management System (PostgreSQL & ML)
+# Enterprise E-Commerce Database Management System (PostgreSQL)
 
 Academic Capstone DBMS Project  
 **Team / Authors**:
@@ -9,9 +9,7 @@ Academic Capstone DBMS Project
 
 ## 📌 Executive Summary
 
-This project implements an end-to-end, academic-grade **E-Commerce Database Management System** designed with strict adherence to **Third Normal Form (3NF)** relational principles. Business rules, data consistency, and transactional safety are enforced directly within the **PostgreSQL engine** via native PL/pgSQL triggers and stored procedures. 
-
-In addition, an **Unsupervised Machine Learning Module** extracts Recency, Frequency, and Monetary (RFM) behavioral metrics from the relational schema, trains a **$K$-Means clustering model ($k=4$)**, dynamically maps clusters into actionable business segments (*Loyal*, *Big Spender*, *At-Risk*, *New*), and synchronizes the results back into the database. A **Streamlit** administrative dashboard and a **FastAPI** REST backend provide full interactive operational control.
+This project implements an end-to-end, academic-grade **E-Commerce Database Management System** designed with strict adherence to **Third Normal Form (3NF)** relational principles. Business rules, data consistency, and transactional safety are enforced directly within the **PostgreSQL engine** via native PL/pgSQL triggers and stored procedures.
 
 ## 📚 Complete Project Documentation Suite
 
@@ -22,7 +20,6 @@ Comprehensive academic and engineering documentation is organized inside the [`d
 - 🏛️ [**System Architecture & Technical Design**](docs/ARCHITECTURE_AND_DESIGN.md): High-level topology, Mermaid flowcharts, ACID transaction sequence diagrams, and 3NF validation.
 - 🗄️ [**Database Specification & Data Dictionary**](docs/DATABASE_SPECIFICATION.md): Entity mappings, complete data dictionary, constraints, triggers (`trg_validate_and_deduct_stock`), stored procedures (`place_order`, `cancel_order`), and complex analytical SQL queries.
 - 🔌 [**REST API Specification & Integration Contract**](docs/API_SPECIFICATION.md): Detailed API contract with endpoints, payloads, HTTP status codes, and error schemas.
-- 🤖 [**Machine Learning RFM Specification**](docs/ML_RFM_SPECIFICATION.md): Mathematical formulations, StandardScaler normalization, $K$-Means ($k=4$) clustering, and database writeback specs.
 - 📁 [**Project Directory Structure Guide**](docs/PROJECT_STRUCTURE_GUIDE.md): Codebase tree breakdown and track responsibility matrix.
 - 🚀 [**Setup & Defense Demonstration Guide**](docs/SETUP_AND_CONTRIBUTION_GUIDE.md): Docker runbook, environment setup, and 5-stage viva demonstration walkthrough.
 
@@ -37,7 +34,6 @@ DBMS PROJECT/
 │   ├── ARCHITECTURE_AND_DESIGN.md # System architecture & ACID flows
 │   ├── DATABASE_SPECIFICATION.md # Data dictionary, 3NF DDL & triggers
 │   ├── API_SPECIFICATION.md    # REST API request/response schemas
-│   ├── ML_RFM_SPECIFICATION.md # RFM math & K-Means clustering specs
 │   ├── PROJECT_STRUCTURE_GUIDE.md # Codebase tree & track ownership
 │   └── SETUP_AND_CONTRIBUTION_GUIDE.md # Setup runbook & viva script
 │
@@ -51,18 +47,13 @@ DBMS PROJECT/
 ├── prisma/                     # Prisma ORM Data Modeling
 │   └── schema.prisma           # Prisma schema mapped to 3NF PostgreSQL tables & relations
 │
-├── ml/                         # Analytics & Machine Learning Module
-│   ├── rfm_segmentation.py     # RFM SQL extractor + scikit-learn K-Means (k=4) clustering
-│   ├── test_rfm.py             # Pytest unit tests for clustering pipeline
-│   └── requirements.txt        # Python analytics dependencies
-│
 ├── src/                        # Full-Stack Next.js (App Router) & Express Application
 │   ├── app/                    # Next.js Pages & API Route Handlers
 │   │   ├── layout.tsx          # Root layout with navbar & academic footer
 │   │   ├── page.tsx            # Executive Dashboard & Live Inventory Catalog
 │   │   ├── orders/page.tsx     # Place Order (Live cart, stored procedure & trigger testbed)
 │   │   ├── cancel-order/page.tsx # Cancel Order (Inventory restoration testbed)
-│   │   ├── analytics/page.tsx  # RFM Segments display & Lifetime Spend calculator
+│   │   ├── analytics/page.tsx  # Lifetime Spend calculator
 │   │   ├── globals.css         # Tailwind CSS styling
 │   │   └── api/                # Next.js Serverless API Routes (Prisma Client)
 │   │       ├── stats/route.ts
@@ -71,12 +62,10 @@ DBMS PROJECT/
 │   │       ├── orders/route.ts
 │   │       ├── orders/[id]/cancel/route.ts
 │   │       ├── customers/[id]/spend/route.ts
-│   │       ├── segments/route.ts
 │   │       └── db/init/route.ts # 1-Click DB reset & seed endpoint
 │   ├── components/             # Reusable UI Components
 │   │   ├── Navbar.tsx          # Navigation bar with 1-click DB initializer
-│   │   ├── MetricCard.tsx      # Dashboard KPI cards
-│   │   └── SegmentBadge.tsx    # Color-coded RFM cluster badges
+│   │   └── MetricCard.tsx      # Dashboard KPI cards
 │   ├── lib/
 │   │   ├── prisma.ts           # Singleton Prisma Client instance
 │   │   └── utils.ts            # Formatting & class helper utilities
@@ -102,7 +91,6 @@ flowchart TD
         STUDIO["Prisma Studio GUI (npm run prisma:studio)"]
         EXPRESS["Express API Server (src/server.js)"]
         PYTHON_APP["Streamlit & FastAPI Alternate Portal (app.py, api.py)"]
-        ML["ML Pipeline (ml/rfm_segmentation.py)"]
     end
 
     subgraph DB_Engine ["PostgreSQL 14+ Relational Engine (3NF)"]
@@ -113,7 +101,6 @@ flowchart TD
         T5["order_items"]
         T6["payments"]
         T7["reviews"]
-        T8["customer_segments"]
 
         subgraph PLpgSQL ["Engine-Level Routines"]
             Trg1["Trigger: trg_validate_and_deduct_stock"]
@@ -126,8 +113,6 @@ flowchart TD
 
     UI -->|psycopg2 / SQLAlchemy| DB_Engine
     API -->|psycopg2| DB_Engine
-    ML -->|SQL RFM Query| DB_Engine
-    ML -->|Upsert Segments| T8
 
     Proc1 -.->|Invokes| T4
     Proc1 -.->|Invokes| T5
@@ -143,7 +128,7 @@ flowchart TD
 
 ## 🗄️ Phase 1: Database Schema & Normalization (3NF)
 
-The schema comprises **8 normalized relational tables** defined in [`schema.sql`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/schema.sql):
+The schema comprises **7 normalized relational tables** defined in [`schema.sql`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/schema.sql):
 
 | # | Table Name | Primary Key | Foreign Keys | Key Constraints & Integrity Rules |
 |---|------------|-------------|--------------|-----------------------------------|
@@ -154,7 +139,6 @@ The schema comprises **8 normalized relational tables** defined in [`schema.sql`
 | 5 | `order_items` | `order_item_id` | `order_id` $\to$ `orders`<br>`product_id` $\to$ `products` | `UNIQUE(order_id, product_id)`, `quantity > 0`, `unit_price > 0`, `ON DELETE CASCADE` for order. |
 | 6 | `payments` | `payment_id` | `order_id` $\to$ `orders` (UNIQUE) | Strict 1-to-1 relationship with orders; `method` CHECK (Credit Card, Debit Card, UPI, Net Banking, Cash on Delivery), `amount > 0`, `payment_status` CHECK (Pending, Completed, Failed, Refunded). |
 | 7 | `reviews` | `review_id` | `customer_id` $\to$ `customers`<br>`product_id` $\to$ `products` | `UNIQUE(customer_id, product_id)`, `rating BETWEEN 1 AND 5`. |
-| 8 | `customer_segments`| `customer_id` | `customer_id` $\to$ `customers` | 1-to-1 analytics store; `recency_days >= 0`, `frequency >= 0`, `monetary_value >= 0`, `segment_label` CHECK (Loyal, Big Spender, At-Risk, New). |
 
 ### 3NF Normalization Justification:
 1. **First Normal Form (1NF)**: Every column holds atomic (indivisible) values; no repeating groups; all tables possess explicit primary keys.
@@ -213,66 +197,16 @@ Defined in [`seed.sql`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/se
 - **12 Orders**: Spanning multiple dates and statuses (`Delivered`, `Shipped`, `Placed`, `Cancelled`) with corresponding line items.
 - **12 Payments**: Covering various payment gateways (UPI, Credit Card, Net Banking, Debit Card, Cash on Delivery).
 - **10 Reviews**: Authentic customer reviews with ratings between 1 and 5.
-- **Customer Segments**: Pre-populated baseline rows ready for K-Means retraining.
 
 ---
 
-## 🧠 Phase 4: RFM Customer Analytics & Machine Learning
-
-Implemented in [`rfm_segmentation.py`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/rfm_segmentation.py):
-
-### 1. RFM Analytical SQL Query
-```sql
-WITH snapshot_ref AS (
-    SELECT COALESCE(MAX(order_date), CURRENT_TIMESTAMP) + INTERVAL '1 day' AS snapshot_date
-    FROM orders
-),
-customer_orders AS (
-    SELECT
-        c.customer_id,
-        c.customer_name,
-        c.email,
-        COALESCE(
-            ROUND(EXTRACT(EPOCH FROM (ref.snapshot_date - MAX(o.order_date))) / 86400),
-            ROUND(EXTRACT(EPOCH FROM (ref.snapshot_date - c.join_date)) / 86400)
-        )::INT AS recency_days,
-        COUNT(DISTINCT CASE WHEN o.status != 'Cancelled' THEN o.order_id END)::INT AS frequency,
-        COALESCE(
-            SUM(CASE WHEN o.status != 'Cancelled' THEN o.total_amount ELSE 0 END),
-            0.00
-        )::NUMERIC(12, 2) AS monetary_value
-    FROM customers c
-    CROSS JOIN snapshot_ref ref
-    LEFT JOIN orders o ON c.customer_id = o.customer_id
-    GROUP BY c.customer_id, c.customer_name, c.email, ref.snapshot_date
-)
-SELECT customer_id, customer_name, email, recency_days, frequency, monetary_value
-FROM customer_orders
-ORDER BY customer_id ASC;
-```
-
-### 2. Machine Learning Algorithm ($K$-Means $k=4$)
-1. **Feature Extraction**: $R$ (Recency in days), $F$ (Frequency count), $M$ (Monetary value in \$).
-2. **Standardization**: `StandardScaler` normalizes each feature to zero mean and unit variance.
-3. **Clustering**: `KMeans(n_clusters=4, random_state=42)` partitions customers into 4 clusters.
-4. **Dynamic Centroid Mapping**:
-   - Highest Mean $M$ $\to$ **`Big Spender`**
-   - Highest Mean $R$ (longest dormant period) $\to$ **`At-Risk`**
-   - Highest Mean $F$ (repeat engagement) $\to$ **`Loyal`**
-   - Remaining cluster (low recency, low order count) $\to$ **`New`**
-5. **Database Upsert**:
-   Executes `INSERT INTO customer_segments ... ON CONFLICT (customer_id) DO UPDATE` to persist clusters.
-
----
-
-## 🖥️ Phase 5: User Interface & Backend
+## 🖥️ Phase 4: User Interface & Backend
 
 ### 1. Streamlit Interactive Dashboard ([`app.py`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/app.py))
 - **📊 Admin Dashboard & Alerts**: Live revenue, low-stock warnings (<25 units highlighted), and order tracking.
 - **🛒 Place Order & Trigger Testing**: Interactive cart builder with direct stored procedure execution and intentional stock underflow rejection test.
 - **❌ Cancel Order**: One-click order cancellation with automated inventory replenishment.
 - **📈 Sales Reports**: Category-wise revenue breakdown, top-selling products, review sentiment, and lifetime spend calculation.
-- **🧠 RFM K-Means Segmentation**: Live ML clustering trigger, segment distribution charts, and centroid metrics.
 - **🔬 Live SQL Console & Schema Inspector**: Interactive query console and column data type viewer.
 
 ### 2. FastAPI REST Service ([`api.py`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/api.py))
@@ -284,7 +218,7 @@ ORDER BY customer_id ASC;
 - `POST /api/orders/{id}/cancel` - Executes `cancel_order` procedure.
 - `GET /api/customers/{id}/spend` - Evaluates `get_customer_total_spent` function.
 ### 3. Prisma ORM Integration ([`prisma/schema.prisma`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/prisma/schema.prisma) & [`src/server.js`](file:///c:/Users/anshu/Documents/codes/DBMS%20PROJECT/src/server.js))
-- **Type-Safe Data Modeling**: Full Prisma models for all 8 normalized tables with relations, indexes, and constraints.
+- **Type-Safe Data Modeling**: Full Prisma models for all 7 normalized tables with relations, indexes, and constraints.
 - **Express + Prisma API Server**: Run `npm start` to serve high-performance endpoints.
 - **Prisma Studio Visual GUI**: Launch `npx prisma studio` to inspect and interact with the database visually.
 - **Raw PL/pgSQL Integration**: Seamlessly calls `place_order`, `cancel_order`, and `get_customer_total_spent` via `prisma.$queryRaw` and `prisma.$executeRaw`.
@@ -332,12 +266,7 @@ psql -U postgres -d ecommerce_db -f procedures_triggers.sql
 psql -U postgres -d ecommerce_db -f seed.sql
 ```
 
-### 4. Run the RFM Customer Segmentation Module
-```bash
-python ml/rfm_segmentation.py
-```
-
-### 5. Launch the Next.js Frontend (Primary Modern Web UI)
+### 4. Launch the Next.js Frontend (Primary Modern Web UI)
 ```bash
 # Start Next.js development server
 npm run dev
@@ -346,9 +275,9 @@ Open your browser at **`http://localhost:3000`** to view:
 - **`http://localhost:3000`** &rarr; Executive Dashboard & Live Inventory Alerts
 - **`http://localhost:3000/orders`** &rarr; Place Order Cart (Atomic Stored Procedure & Trigger Testing)
 - **`http://localhost:3000/cancel-order`** &rarr; Cancel Order (Inventory Restoration & Refund Status)
-- **`http://localhost:3000/analytics`** &rarr; RFM K-Means Segmentation & Lifetime Spend Function
+- **`http://localhost:3000/analytics`** &rarr; Lifetime Spend Function
 
-### 6. (Optional) Alternate Streamlit & FastAPI Portals
+### 5. (Optional) Alternate Streamlit & FastAPI Portals
 ```bash
 # Launch Streamlit Dashboard
 python -m streamlit run app.py --server.port 8501
@@ -357,7 +286,7 @@ python -m streamlit run app.py --server.port 8501
 python -m uvicorn api:app --reload --port 8000
 ```
 
-### 7. Run with Prisma ORM & Express API
+### 6. Run with Prisma ORM & Express API
 ```bash
 # Install npm dependencies (if not already installed)
 npm install
@@ -371,7 +300,7 @@ npm start
 ```
 Server runs at `http://localhost:4000`.
 
-### 8. Launch Prisma Studio (Visual Database GUI)
+### 7. Launch Prisma Studio (Visual Database GUI)
 ```bash
 npm run prisma:studio
 ```
@@ -387,7 +316,6 @@ Opens an interactive, web-based database management interface at `http://localho
 | **TC-02** | Order quantity exceeding inventory (e.g., 999 units). | Transaction rolled back; database raises exception: `Insufficient stock for product...`. | `trg_validate_and_deduct_stock` |
 | **TC-03** | Cancel an active order (`cancel_order(order_id)`). | Order status updated to `'Cancelled'`, inventory restored to `products.stock_qty`, payment status updated to `'Refunded'`. | `cancel_order` |
 | **TC-04** | Evaluate customer lifetime aggregate spend (`get_customer_total_spent(1)`). | Returns exact sum of all non-cancelled orders for Customer #1. | `get_customer_total_spent` |
-| **TC-05** | Execute RFM Segmentation pipeline. | Extracts RFM metrics, trains K-Means ($k=4$), clusters mapped to labels (*Loyal*, *Big Spender*, *At-Risk*, *New*), upserted into `customer_segments`. | `rfm_segmentation.py` |
 
 ---
 

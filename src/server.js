@@ -248,30 +248,7 @@ app.get('/api/customers/:id/spend', async (req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// 9. Customer Segments (RFM Machine Learning Clusters)
-// ----------------------------------------------------------------------------
-app.get('/api/segments', async (req, res) => {
-  try {
-    const segments = await prisma.customerSegment.findMany({
-      include: {
-        customer: {
-          select: {
-            customerName: true,
-            email: true,
-            city: true,
-          },
-        },
-      },
-      orderBy: { monetaryValue: 'desc' },
-    });
-    res.json(segments);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ----------------------------------------------------------------------------
-// 10. Reviews & Ratings
+// 9. Reviews & Ratings
 // ----------------------------------------------------------------------------
 app.get('/api/reviews', async (req, res) => {
   try {
@@ -294,7 +271,6 @@ if (require.main === module) {
     console.log(`🚀 Prisma ORM & Express Server running on http://localhost:${PORT}`);
     console.log(`📋 Health check: http://localhost:${PORT}/health`);
     console.log(`🛍️ Products catalog: http://localhost:${PORT}/api/products`);
-    console.log(`📊 Segments: http://localhost:${PORT}/api/segments`);
   });
 }
 

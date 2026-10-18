@@ -1,5 +1,5 @@
 
-TRUNCATE TABLE customer_segments, reviews, payments, order_items, orders, cart_items, carts, products, categories, customers RESTART IDENTITY CASCADE;
+TRUNCATE TABLE reviews, payments, order_items, orders, cart_items, carts, products, categories, customers RESTART IDENTITY CASCADE;
 INSERT INTO categories (category_name, description) VALUES
 ('Electronics', 'Smartphones, audio gear, peripherals, and modern smart gadgets.'),
 ('Fashion & Apparel', 'Contemporary clothing, footwear, outerwear, and accessories.'),
@@ -162,18 +162,3 @@ INSERT INTO reviews (customer_id, product_id, rating, review_text, review_date) 
 (6, 15, 4, 'Generous cushioning and superior non-slip texture even during intense sessions.', '2026-09-29 18:40:00+05:30'),
 (8, 6, 5, 'Featherlight with remarkable arch bounce. Perfect companion for morning marathons.', '2026-09-20 10:05:00+05:30'),
 (8, 7, 3, 'Decent formal fabric, though the collar softens somewhat after a couple washes.', '2026-09-25 15:30:00+05:30');
-
--- ============================================================================
--- 9. INITIAL SEED FOR CUSTOMER SEGMENTS (Pre-clustering baseline)
--- ============================================================================
-INSERT INTO customer_segments (customer_id, recency_days, frequency, monetary_value, segment_label, last_updated) VALUES
-(1, 9,  2, 472.98, 'Loyal',       CURRENT_TIMESTAMP),
-(2, 6,  2, 678.97, 'Big Spender', CURRENT_TIMESTAMP),
-(3, 17, 1, 154.50, 'Loyal',       CURRENT_TIMESTAMP),
-(4, 329,1, 80.50,  'At-Risk',     CURRENT_TIMESTAMP),
-(5, 211,1, 79.99,  'At-Risk',     CURRENT_TIMESTAMP),
-(6, 12, 1, 166.00, 'Loyal',       CURRENT_TIMESTAMP),
-(7, 4,  1, 34.99,  'New',         CURRENT_TIMESTAMP),
-(8, 19, 1, 174.00, 'Loyal',       CURRENT_TIMESTAMP),
-(9, 85, 0, 0.00,   'At-Risk',     CURRENT_TIMESTAMP),
-(10,3,  1, 83.00,  'New',         CURRENT_TIMESTAMP);

@@ -62,7 +62,6 @@ model Customer {
   cart            Cart?
   orders          Order[]
   reviews         Review[]
-  customerSegment CustomerSegment?
 
   @@index([city], map: "idx_customers_city")
   @@index([email], map: "idx_customers_email")
@@ -170,20 +169,4 @@ model Review {
   @@index([productId], map: "idx_reviews_product")
   @@index([customerId], map: "idx_reviews_customer")
   @@map("reviews")
-}
-
-// ----------------------------------------------------------------------------
-// 10. Customer Segments (Derived Customer Behavior Targets)
-// ----------------------------------------------------------------------------
-model CustomerSegment {
-  customerId    Int      @id @map("customer_id")
-  recencyDays   Int      @map("recency_days")
-  frequency     Int
-  monetaryValue Decimal  @map("monetary_value") @db.Decimal(12, 2)
-  segmentLabel  String   @map("segment_label") @db.VarChar(30)
-  lastUpdated   DateTime @default(now()) @map("last_updated") @db.Timestamptz()
-  customer      Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade, onUpdate: Cascade)
-
-  @@index([segmentLabel], map: "idx_customer_segments_label")
-  @@map("customer_segments")
 }

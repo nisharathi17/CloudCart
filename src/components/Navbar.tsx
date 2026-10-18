@@ -34,7 +34,7 @@ export default function Navbar() {
     { href: '/', label: 'Dashboard & Inventory', icon: Database },
     { href: '/orders', label: 'Place Order (Triggers)', icon: ShoppingCart },
     { href: '/cancel-order', label: 'Cancel Order (Restoration)', icon: XCircle },
-    { href: '/analytics', label: 'RFM Analytics & ML', icon: BarChart3 },
+    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   ];
 
   return (

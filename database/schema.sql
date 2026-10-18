@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS customer_segments CASCADE;
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
@@ -183,26 +182,3 @@ CREATE TABLE reviews (
 CREATE INDEX idx_reviews_product ON reviews(product_id);
 CREATE INDEX idx_reviews_customer ON reviews(customer_id);
 
-CREATE TABLE customer_segments (
-    customer_id     INT PRIMARY KEY,
-    recency_days    INT NOT NULL,
-    frequency       INT NOT NULL,
-    monetary_value  NUMERIC(12, 2) NOT NULL,
-    segment_label   VARCHAR(30) NOT NULL,
-    last_updated    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_customer_segments_customer
-        FOREIGN KEY (customer_id)
-        REFERENCES customers(customer_id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-    CONSTRAINT chk_segments_recency
-        CHECK (recency_days >= 0),
-    CONSTRAINT chk_segments_frequency
-        CHECK (frequency >= 0),
-    CONSTRAINT chk_segments_monetary
-        CHECK (monetary_value >= 0),
-    CONSTRAINT chk_segments_label
-        CHECK (segment_label IN ('Loyal', 'Big Spender', 'At-Risk', 'New'))
-);
-
-CREATE INDEX idx_customer_segments_label ON customer_segments(segment_label);

@@ -61,34 +61,6 @@ async function main() {
     `;
     console.log(`Lifetime spend for Customer #${customerId}:`, spentResult);
 
-    // 4. Querying Customer RFM Segments
-    console.log('\n--- 4. CUSTOMER SEGMENTS (K-Means ML Output) ---');
-    const segments = await prisma.customerSegment.findMany({
-      include: {
-        customer: {
-          select: {
-            customerName: true,
-            city: true,
-          },
-        },
-      },
-      orderBy: {
-        monetaryValue: 'desc',
-      },
-    });
-
-    console.table(
-      segments.map((s) => ({
-        CustomerID: s.customerId,
-        Name: s.customer.customerName,
-        City: s.customer.city,
-        RecencyDays: s.recencyDays,
-        Frequency: s.frequency,
-        Monetary: `$${s.monetaryValue}`,
-        Segment: s.segmentLabel,
-      }))
-    );
-
     console.log('\n✅ All Prisma ORM queries executed successfully!');
   } catch (error) {
     console.error('❌ Error executing Prisma demonstration:', error.message);
