@@ -34,7 +34,7 @@ export default function DashboardPage() {
 
         setStats(statsData);
         setProducts(prodData);
-        setOrders(ordersData);
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (err: any) {
         setError(err.message);
       } finally {

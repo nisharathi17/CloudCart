@@ -10,6 +10,8 @@ RUN npm ci
 # Copy the rest of the code, generate the Prisma client, build Next.js
 COPY . .
 RUN npx prisma generate
+ENV NEXT_PUBLIC_COGNITO_USER_POOL_ID=ap-southeast-2_ap-southeast-2_8SEqyxFG0
+ENV NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID=7lno864uhqjs0oklee6bscqr4s
 RUN npm run build
 
 # ---------- Stage 2: the image that actually runs ----------

@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
-import { fromLoginCredentials } from '@aws-sdk/credential-providers';
+
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth';
 
@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 
 const sqs = new SQSClient({
   region: process.env.AWS_REGION || 'ap-southeast-2',
-  credentials: fromLoginCredentials(),
+  
 });
 
 export async function GET(request: NextRequest) {
