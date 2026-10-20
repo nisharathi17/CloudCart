@@ -2,8 +2,6 @@
 
 Academic Capstone DBMS Project  
 **Team / Authors**:
-- **Nisha Rathi** (`24BYB0137`)
-- **Anshul Gupta** (`24BYB0149`)
 
 ---
 
