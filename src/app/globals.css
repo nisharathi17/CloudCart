@@ -3,12 +3,49 @@
 @tailwind utilities;
 
 :root {
-  --background: #0b0f19;
-  --foreground: #f8fafc;
+  --background: #fbf7f4;
+  --foreground: #2e2a33;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid #275f8c;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+[data-amplify-authenticator] {
+  --amplify-components-authenticator-router-box-shadow: none;
+  --amplify-components-authenticator-router-border-width: 1px;
+  --amplify-components-authenticator-router-background-color: #ffffff;
+  --amplify-components-fieldcontrol-border-color: #efe6e0;
+  --amplify-components-field-label-color: #2e2a33;
+  --amplify-fonts-default-variable: var(--font-sans);
+  --amplify-fonts-default-static: var(--font-sans);
+  --amplify-radii-small: 0.75rem;
+  --amplify-radii-medium: 0.75rem;
+  --amplify-radii-large: 0.75rem;
+  --amplify-colors-background-primary: #ffffff;
+  --amplify-colors-border-primary: #efe6e0;
+  --amplify-colors-brand-primary-10: #fff6f1;
+  --amplify-colors-brand-primary-20: #ffe9dd;
+  --amplify-colors-brand-primary-40: #ffd6c2;
+  --amplify-colors-brand-primary-80: #9a4b26;
+  --amplify-colors-brand-primary-90: #823e1f;
+  --amplify-colors-brand-primary-100: #6b3219;
 }

@@ -1,11 +1,18 @@
 
 import './globals.css';
 import type { Metadata } from 'next';
+import { Bricolage_Grotesque } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import AuthProvider from '@/components/AuthProvider';
 
+const sans = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'E-Commerce DBMS | PostgreSQL 3NF & Prisma ORM',
+  title: 'CloudCart',
   description: 'Academic DBMS Capstone Project',
 };
 
@@ -15,22 +22,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
+    <html lang="en" className={sans.variable}>
+      <body className="bg-paper text-ink font-sans antialiased flex flex-col min-h-screen">
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             {children}
           </main>
-          <footer className="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
-            <div className="max-w-7xl mx-auto px-4 space-y-1">
+          <footer className="border-t border-line py-6 text-center text-sm text-ink-soft">
+            <div className="max-w-6xl mx-auto px-4">
               <p>
-                Academic DBMS Capstone Project &bull; Built with{' '}
-                <strong>PostgreSQL 3NF</strong>,{' '}
-                <strong>PL/pgSQL Triggers</strong>,{' '}
-                <strong>Prisma ORM</strong>, and <strong>Next.js</strong>.
+                CloudCart is a student project built with PostgreSQL, Prisma and Next.js, running on AWS.
               </p>
-              
             </div>
           </footer>
         </AuthProvider>

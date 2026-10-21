@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calculator, DollarSign } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 export default function AnalyticsPage() {
@@ -46,58 +45,47 @@ export default function AnalyticsPage() {
     fetchSpend(id);
   };
 
+  const selectedCustomer = customers.find((c) => c.customerId === Number(selectedCustomerId));
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto">
       {/* Header */}
-      <div className="pb-4 border-b border-slate-800">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          Customer Analytics
-        </h1>
-        <p className="text-sm text-slate-400">
-          Evaluates PostgreSQL native stored function <code>get_customer_total_spent</code>.
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight text-ink">Customer spend</h1>
+        <p className="mt-1 text-ink-soft">
+          How much a customer has spent in total, not counting cancelled orders.
         </p>
       </div>
 
-      {/* Customer Lifetime Spend Calculator */}
-      <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/60 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-teal-400" />
-            <h2 className="font-semibold text-base text-white">
-              Stored Function: <code>get_customer_total_spent(customer_id)</code>
-            </h2>
-          </div>
-          <span className="text-xs text-slate-400 font-mono">Calculated inside PostgreSQL</span>
+      <div className="p-6 rounded-3xl border border-line bg-card space-y-5">
+        <div className="space-y-1.5">
+          <label htmlFor="customer-select" className="text-sm text-ink-soft">
+            Customer
+          </label>
+          <select
+            id="customer-select"
+            value={selectedCustomerId}
+            onChange={(e) => handleCustomerChange(Number(e.target.value))}
+            className="w-full p-2.5 rounded-xl bg-paper border border-line text-sm text-ink"
+          >
+            {customers.map((c) => (
+              <option key={c.customerId} value={c.customerId}>
+                {c.city ? `${c.customerName}, ${c.city}` : c.customerName}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-          <div>
-            <label className="text-xs text-slate-400 mb-1.5 block">Select Customer</label>
-            <select
-              value={selectedCustomerId}
-              onChange={(e) => handleCustomerChange(Number(e.target.value))}
-              className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-teal-500"
-            >
-              {customers.map((c) => (
-                <option key={c.customerId} value={c.customerId}>
-                  #{c.customerId} - {c.customerName} ({c.city})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-400 uppercase font-medium">Lifetime Aggregate Spend</p>
-              <p className="text-2xl font-bold font-mono text-emerald-400 mt-0.5">
-                {spendLoading ? 'Computing...' : formatCurrency(lifetimeSpend)}
-              </p>
-            </div>
-            <div className="p-3 rounded-full bg-emerald-500/10 text-emerald-400">
-              <DollarSign className="w-6 h-6" />
-            </div>
-          </div>
+        <div className="p-6 rounded-2xl bg-peach-100 text-center" aria-live="polite">
+          <p className="text-ink-soft">{selectedCustomer?.customerName ?? 'This customer'} has spent</p>
+          <p className="mt-1 text-5xl font-bold text-peach-700 tabular-nums">
+            {spendLoading ? '…' : formatCurrency(lifetimeSpend)}
+          </p>
         </div>
+
+        <p className="text-sm text-ink-soft">
+          This total is calculated inside PostgreSQL by <code>get_customer_total_spent</code>.
+        </p>
       </div>
     </div>
   );

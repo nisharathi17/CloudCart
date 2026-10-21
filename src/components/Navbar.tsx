@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Database, ShoppingCart, XCircle, BarChart3, LogIn, LogOut } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
 
@@ -39,77 +39,88 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: '/', label: 'Dashboard & Inventory', icon: Database },
-    { href: '/orders', label: 'Place Order (Triggers)', icon: ShoppingCart },
-    { href: '/cancel-order', label: 'Cancel Order (Restoration)', icon: XCircle },
-    { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { href: '/', label: 'Inventory' },
+    { href: '/orders', label: 'Place order' },
+    { href: '/cancel-order', label: 'Cancel order' },
+    { href: '/analytics', label: 'Customer spend' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur border-b border-line">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-teal-500/20 border border-teal-500/40 rounded-lg text-teal-400">
-              <Database className="w-6 h-6" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-peach-200 text-peach-700">
+              <ShoppingBag className="w-5 h-5" />
             </div>
-            <div>
-              <Link href="/" className="font-bold text-lg text-white hover:text-teal-400 transition-colors">
-                E-Commerce DBMS
-              </Link>
-              <div className="text-xs text-slate-400">
-                <span>PostgreSQL 3NF + Prisma ORM</span>
-              </div>
-            </div>
+            <Link href="/" className="text-xl font-bold text-ink">
+              CloudCart
+            </Link>
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex space-x-1">
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
-              const Icon = link.icon;
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                     isActive
-                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-peach-200 text-peach-700 font-semibold'
+                      : 'text-ink-soft hover:bg-peach-50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{link.label}</span>
+                  {link.label}
                 </Link>
               );
             })}
           </nav>
 
           {/* Login / Sign out */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             {userEmail ? (
               <>
-                <span className="hidden lg:inline text-xs text-slate-400">{userEmail}</span>
+                <span className="hidden lg:inline text-sm text-ink-soft">{userEmail}</span>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-700 hover:bg-slate-600 text-white shadow transition-all"
+                  className="text-sm text-ink-soft hover:text-ink transition-colors"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign out</span>
+                  Sign out
                 </button>
               </>
             ) : (
               <Link
                 href="/login"
-                className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-teal-600 hover:bg-teal-500 text-white shadow transition-all"
+                className="px-4 py-1.5 text-sm font-semibold rounded-full bg-sky-200 text-sky-700 hover:bg-sky-100 transition-colors"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Login</span>
+                Log in
               </Link>
             )}
           </div>
         </div>
+
+        {/* Mobile nav */}
+        <nav className="md:hidden flex items-center gap-1 overflow-x-auto pb-3 -mt-1">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  isActive
+                    ? 'bg-peach-200 text-peach-700 font-semibold'
+                    : 'text-ink-soft hover:bg-peach-50'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );

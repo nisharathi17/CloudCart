@@ -2,14 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  ShoppingCart,
-  Plus,
-  Trash2,
-  CheckCircle2,
-  AlertOctagon,
-  Zap,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
@@ -182,161 +175,102 @@ export default function PlaceOrderPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="pb-4 border-b border-slate-800">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          Place Order &amp; Database Trigger Testbed
-        </h1>
-        <p className="text-sm text-slate-400">
-          Executes native PostgreSQL stored procedure{' '}
-          <code>place_order(p_customer_id, p_items JSONB)</code> and fires{' '}
-          <code>trg_validate_and_deduct_stock</code> and{' '}
-          <code>trg_update_order_total</code>.
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight text-ink">Place an order</h1>
+        <p className="mt-1 text-ink-soft">
+          The database checks stock, works out the total, and a confirmation email is sent.
         </p>
       </div>
 
-      <div className="p-4 rounded-xl border border-teal-500/30 bg-teal-950/20 text-teal-200 text-xs space-y-2">
-        <div className="flex items-center gap-2 font-bold text-teal-400 text-sm">
-          <Zap className="w-4 h-4" />
-          <span>PostgreSQL Engine Business Logic in Action:</span>
-        </div>
-        <ul className="list-disc list-inside space-y-1 text-slate-300">
-          <li>
-            <strong>Trigger 1 (Stock Deduction)</strong>: Fires BEFORE INSERT
-            on order_items. Validates stock and deducts inventory.
-          </li>
-          <li>
-            <strong>Trigger 2 (Order Total Sync)</strong>: Fires AFTER INSERT
-            on order_items and recalculates the order total.
-          </li>
-          <li>
-            <strong>Trigger Stress Test Tip</strong>: Set quantity higher than
-            available stock to test transaction rollback.
-          </li>
-        </ul>
-      </div>
-
       {successResult && (
-        <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-200 space-y-2">
-          <div className="flex items-center gap-2 font-bold text-emerald-400">
-            <CheckCircle2 className="w-5 h-5" />
-            <span>
-              Order Placed Successfully! (Order #{successResult.orderId})
-            </span>
-          </div>
-          <p className="text-xs text-slate-300">
-            Calculated Total Amount:{' '}
-            <strong>{formatCurrency(successResult.totalAmount)}</strong>
-          </p>
-          <div className="text-[11px] font-mono text-emerald-300 space-y-0.5">
-            {successResult.triggersFired?.map((trigger: string, index: number) => (
-              <p key={index}>&bull; {trigger}</p>
-            ))}
-          </div>
+        <div role="status" className="p-5 rounded-3xl bg-sage-100 text-sage-700 space-y-1">
+          <p className="font-semibold">Order #{successResult.orderId} placed</p>
+          <p className="text-sm">Total: {formatCurrency(successResult.totalAmount)}</p>
+          {successResult.emailQueued && (
+            <p className="text-sm">A confirmation email is on its way.</p>
+          )}
         </div>
       )}
 
       {engineError && (
-        <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-950/30 text-rose-200 space-y-2">
-          <div className="flex items-center gap-2 font-bold text-rose-400">
-            <AlertOctagon className="w-5 h-5" />
-            <span>Order Failed:</span>
-          </div>
-          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-rose-300 overflow-x-auto">
-            {engineError}
-          </div>
+        <div role="alert" className="p-5 rounded-3xl bg-blush-100 text-blush-700 space-y-1">
+          <p className="font-semibold">The order wasn't placed</p>
+          <p className="text-sm">{engineError}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/60 space-y-5">
-          <h2 className="font-semibold text-base text-white">
-            1. Order Configuration
-          </h2>
-
-
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="md:col-span-2 p-6 rounded-3xl border border-line bg-card space-y-5">
+          <h2 className="font-semibold text-ink">Add products</h2>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-300">
-              Select Product
+            <label htmlFor="product-select" className="text-sm text-ink-soft">
+              Product
             </label>
             <select
+              id="product-select"
               value={selectedProductId}
               onChange={(e) => setSelectedProductId(Number(e.target.value))}
-              className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-teal-500"
+              className="w-full p-2.5 rounded-xl bg-paper border border-line text-sm text-ink"
             >
               {products.map((product) => (
                 <option key={product.productId} value={product.productId}>
-                  #{product.productId} - {product.productName} (
-                  {formatCurrency(product.price)} | Stock: {product.stockQty})
+                  {product.productName}, {formatCurrency(product.price)}
                 </option>
               ))}
             </select>
 
             {selectedProduct && (
-              <p className="text-[11px] text-slate-400">
-                Available Inventory in DB:{' '}
-                <span className="font-bold text-teal-400">
-                  {selectedProduct.stockQty} units
-                </span>
+              <p className="text-sm text-ink-faint">
+                {selectedProduct.stockQty} in stock
               </p>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-slate-300">
-              Quantity to Order
+            <label htmlFor="quantity-input" className="text-sm text-ink-soft">
+              Quantity
             </label>
             <input
+              id="quantity-input"
               type="number"
               min="1"
               value={quantity}
               onChange={(e) =>
                 setQuantity(Math.max(1, parseInt(e.target.value) || 1))
               }
-              className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-teal-500 font-mono"
+              className="w-full p-2.5 rounded-xl bg-paper border border-line text-sm text-ink tabular-nums"
             />
           </div>
 
           <button
             onClick={handleAddToCart}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold transition-colors"
+            className="w-full px-4 py-2.5 rounded-full bg-sky-200 text-sky-700 hover:bg-sky-100 text-sm font-semibold transition-colors"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Item to Order Payload</span>
+            Add to order
           </button>
         </div>
 
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/60 space-y-5 flex flex-col justify-between">
+        <div className="md:col-span-3 p-6 rounded-3xl border border-line bg-card space-y-5 flex flex-col justify-between">
           <div className="space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h2 className="font-semibold text-base text-white flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-teal-400" />
-                <span>2. Order Items Payload (JSONB)</span>
-              </h2>
-              <span className="text-xs text-slate-400 font-mono">
-                {cart.length} line items
-              </span>
-            </div>
+            <h2 className="font-semibold text-ink">Your order</h2>
 
             {cart.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-500 space-y-1">
-                <p>No items added yet.</p>
-                <p>Select a product and click &quot;Add Item&quot; on the left.</p>
-              </div>
+              <p className="py-12 text-center text-sm text-ink-faint">
+                Nothing here yet. Choose a product and add it to your order.
+              </p>
             ) : (
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                 {cart.map((item) => (
                   <div
                     key={item.productId}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-950 border border-slate-800 text-xs"
+                    className="flex items-center justify-between p-3 rounded-xl bg-paper border border-line text-sm"
                   >
                     <div>
-                      <p className="font-medium text-slate-200">
-                        {item.productName}
-                      </p>
-                      <p className="text-slate-400">
-                        {item.quantity} &times; {formatCurrency(item.unitPrice)} ={' '}
-                        <span className="text-emerald-400 font-semibold font-mono">
+                      <p className="font-medium text-ink">{item.productName}</p>
+                      <p className="text-ink-soft">
+                        {item.quantity} × {formatCurrency(item.unitPrice)} ={' '}
+                        <span className="font-semibold tabular-nums">
                           {formatCurrency(item.quantity * item.unitPrice)}
                         </span>
                       </p>
@@ -344,9 +278,9 @@ export default function PlaceOrderPage() {
                     <button
                       onClick={() => handleRemoveFromCart(item.productId)}
                       aria-label={`Remove ${item.productName}`}
-                      className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                      className="text-ink-faint hover:text-blush-700 transition-colors p-1"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -354,10 +288,10 @@ export default function PlaceOrderPage() {
             )}
           </div>
 
-          <div className="pt-4 border-t border-slate-800 space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Calculated Total:</span>
-              <span className="text-xl font-bold font-mono text-emerald-400">
+          <div className="pt-4 border-t border-line space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-ink-soft">Total</span>
+              <span className="text-2xl font-bold tabular-nums">
                 {formatCurrency(cartTotal)}
               </span>
             </div>
@@ -365,17 +299,20 @@ export default function PlaceOrderPage() {
             <button
               onClick={handleSubmitOrder}
               disabled={loading || cart.length === 0}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-semibold text-sm transition-all disabled:opacity-50 shadow-lg shadow-teal-950"
+              className="w-full px-4 py-3 rounded-full bg-peach-200 text-peach-700 hover:bg-peach-100 font-semibold text-sm transition-colors disabled:opacity-50"
             >
-              <Zap className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>
-                {loading
-                  ? 'Executing place_order procedure...'
-                  : 'Execute place_order Procedure'}
-              </span>
+              {loading ? 'Placing order…' : 'Place order'}
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="p-5 rounded-3xl bg-sky-100 text-sm text-ink-soft space-y-1">
+        <p className="font-semibold text-ink">What happens in the database</p>
+        <p>
+          The <code>place_order</code> procedure creates the order, a trigger checks and deducts
+          stock, and another trigger recalculates the total. If stock is short, everything rolls back.
+        </p>
       </div>
     </div>
   );

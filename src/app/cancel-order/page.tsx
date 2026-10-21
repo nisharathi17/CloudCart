@@ -1,39 +1,42 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { XCircle, CheckCircle2, RotateCcw, AlertCircle, Package } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { fetchAuthSession } from 'aws-amplify/auth';
-
-async function authHeaders(): Promise<Record<string, string>> {
-  const session = await fetchAuthSession();
-  const accessToken = session.tokens?.accessToken?.toString();
-  const idToken = session.tokens?.idToken?.toString();
-  return accessToken && idToken
-    ? { Authorization: `Bearer ${accessToken}`, 'x-id-token': idToken }
-    : {};
-}
+import { authHeaders } from '@/lib/auth-headers';
+import Link from 'next/link';
 
 export default function CancelOrderPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     try {
-            const res = await fetch('/api/orders', { headers: await authHeaders() });
+      const res = await fetch('/api/orders', { headers: await authHeaders() });
+
+      if (res.status === 401) {
+        setSignedIn(false);
+        setOrders([]);
+        return;
+      }
+      setSignedIn(true);
+
       const data = await res.json();
       const activeOrders = Array.isArray(data)
         ? data.filter((o: any) => o.status !== 'Cancelled')
         : [];
       setOrders(activeOrders);
-      if (activeOrders.length > 0 && selectedOrderId === '') {
-        setSelectedOrderId(activeOrders[0].orderId);
-      }
+      setSelectedOrderId((prev) =>
+        activeOrders.some((o: any) => o.orderId === prev) ? prev : activeOrders[0]?.orderId ?? ''
+      );
     } catch (err) {
       console.error('Error fetching orders:', err);
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -43,14 +46,14 @@ export default function CancelOrderPage() {
 
   const handleCancelOrder = async () => {
     if (!selectedOrderId) return;
-    if (!confirm(`Are you sure you want to cancel Order #${selectedOrderId}? This will restore stock in products.`)) return;
+    if (!confirm(`Cancel order #${selectedOrderId}? Its items go back into stock.`)) return;
 
     setLoading(true);
     setSuccessMessage(null);
     setErrorMessage(null);
 
     try {
-            const res = await fetch(`/api/orders/${selectedOrderId}/cancel`, {
+      const res = await fetch(`/api/orders/${selectedOrderId}/cancel`, {
         method: 'POST',
         headers: await authHeaders(),
       });
@@ -59,7 +62,7 @@ export default function CancelOrderPage() {
       if (!res.ok) {
         setErrorMessage(data.details || data.error);
       } else {
-        setSuccessMessage(`Order #${selectedOrderId} was successfully cancelled. Inventory stock restored!`);
+        setSuccessMessage(`Order #${selectedOrderId} is cancelled and its items are back in stock.`);
         fetchOrders();
       }
     } catch (err: any) {
@@ -74,119 +77,122 @@ export default function CancelOrderPage() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="pb-4 border-b border-slate-800">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          Cancel Order &amp; Stock Restoration Testbed
-        </h1>
-        <p className="text-sm text-slate-400">
-          Executes native PostgreSQL stored procedure <code>cancel_order(p_order_id)</code>, restores line item quantities to <code>products.stock_qty</code>, and transitions payments (Completed &rarr; Refunded, Pending &rarr; Failed).
+      <div>
+        <h1 className="text-4xl font-bold tracking-tight text-ink">Cancel an order</h1>
+        <p className="mt-1 text-ink-soft">
+          Cancelling puts every item back into stock and refunds the payment.
         </p>
       </div>
 
       {successMessage && (
-        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20 text-emerald-200 flex items-center gap-2 text-sm">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span>{successMessage}</span>
+        <div role="status" className="p-5 rounded-3xl bg-sage-100 text-sage-700 text-sm">
+          {successMessage}
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-950/20 text-rose-200 flex items-center gap-2 text-sm">
-          <AlertCircle className="w-5 h-5 text-rose-400" />
-          <span>{errorMessage}</span>
+        <div role="alert" className="p-5 rounded-3xl bg-blush-100 text-blush-700 text-sm">
+          {errorMessage}
         </div>
       )}
 
-      {orders.length === 0 ? (
-        <div className="p-12 text-center text-slate-500 border border-slate-800 rounded-xl bg-slate-900/40">
-          <p className="text-base font-medium">No active orders available for cancellation.</p>
-          <p className="text-xs text-slate-400 mt-1">All orders are either completed or already cancelled.</p>
-        </div>
+      {!loaded ? (
+        <p className="p-12 text-center text-sm text-ink-soft">Loading your orders…</p>
+      ) : !signedIn ? (
+        <p className="p-12 text-center text-sm text-ink-soft border border-line rounded-3xl bg-card">
+          <Link href="/login" className="text-sky-700 hover:underline">
+            Log in
+          </Link>{' '}
+          to see your orders
+        </p>
+      ) : orders.length === 0 ? (
+        <p className="p-12 text-center text-sm text-ink-soft border border-line rounded-3xl bg-card">
+          No orders to cancel.{' '}
+          <Link href="/orders" className="text-sky-700 hover:underline">
+            Place one.
+          </Link>
+        </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Order Selector */}
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/60 space-y-5">
-            <h2 className="font-semibold text-base text-white">1. Select Active Order</h2>
-            <div className="space-y-2">
-              <label className="text-xs text-slate-400">Target Order</label>
+          <div className="p-6 rounded-3xl border border-line bg-card space-y-5">
+            <h2 className="font-semibold text-ink">Select an order</h2>
+            <div className="space-y-1.5">
+              <label htmlFor="order-select" className="text-sm text-ink-soft">
+                Order
+              </label>
               <select
+                id="order-select"
                 value={selectedOrderId}
                 onChange={(e) => setSelectedOrderId(Number(e.target.value))}
-                className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-sm text-slate-200 focus:outline-none focus:border-teal-500"
+                className="w-full p-2.5 rounded-xl bg-paper border border-line text-sm text-ink"
               >
                 {orders.map((o) => (
                   <option key={o.orderId} value={o.orderId}>
-                    Order #{o.orderId} - {o.customer?.customerName} ({formatCurrency(o.totalAmount)}) [{o.status}]
+                    #{o.orderId}, {formatCurrency(o.totalAmount)}, {o.status}
                   </option>
                 ))}
               </select>
             </div>
 
             {currentOrder && (
-              <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 text-xs space-y-2 text-slate-300">
-                <p>
-                  <strong>Customer:</strong> {currentOrder.customer?.customerName} ({currentOrder.customer?.email})
-                </p>
-                <p>
-                  <strong>Date:</strong> {formatDate(currentOrder.orderDate)}
-                </p>
-                <p>
-                  <strong>Status:</strong>{' '}
-                  <span className="font-semibold text-teal-400">{currentOrder.status}</span>
-                </p>
-                <p>
-                  <strong>Payment Method:</strong> {currentOrder.payment?.method || 'None'}{' '}
-                  <span className="text-slate-500">({currentOrder.payment?.paymentStatus || 'Pending'})</span>
-                </p>
-              </div>
+              <dl className="p-4 rounded-xl bg-paper border border-line text-sm space-y-2">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-soft">Placed</dt>
+                  <dd className="text-ink">{formatDate(currentOrder.orderDate)}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-soft">Status</dt>
+                  <dd className="text-ink font-medium">{currentOrder.status}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-soft">Payment</dt>
+                  <dd className="text-ink">
+                    {currentOrder.payment?.method || 'None'} ({currentOrder.payment?.paymentStatus || 'Pending'})
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-soft">Total</dt>
+                  <dd className="text-ink tabular-nums">{formatCurrency(currentOrder.totalAmount)}</dd>
+                </div>
+              </dl>
             )}
 
             <button
               onClick={handleCancelOrder}
               disabled={loading || !selectedOrderId}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm transition-all disabled:opacity-50 shadow-lg shadow-rose-950"
+              className="w-full px-4 py-3 rounded-full bg-blush-200 text-blush-700 hover:bg-blush-100 font-semibold text-sm transition-colors disabled:opacity-50"
             >
-              <RotateCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>{loading ? 'Executing cancel_order...' : 'Execute cancel_order Procedure'}</span>
+              {loading ? 'Cancelling…' : 'Cancel this order'}
             </button>
           </div>
 
           {/* Items that will be restored */}
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/60 space-y-4">
-            <h2 className="font-semibold text-base text-white flex items-center gap-2">
-              <Package className="w-4 h-4 text-teal-400" />
-              <span>2. Line Items Restored to Inventory</span>
-            </h2>
+          <div className="p-6 rounded-3xl border border-line bg-card space-y-4">
+            <h2 className="font-semibold text-ink">Goes back into stock</h2>
 
             {currentOrder?.orderItems && currentOrder.orderItems.length > 0 ? (
               <div className="space-y-2">
                 {currentOrder.orderItems.map((item: any) => (
                   <div
                     key={item.orderItemId}
-                    className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs"
+                    className="p-3 rounded-xl bg-paper border border-line flex items-center justify-between text-sm"
                   >
-                    <div>
-                      <p className="font-medium text-slate-200">{item.product?.productName}</p>
-                      <p className="text-slate-500">Unit Price: {formatCurrency(item.unitPrice)}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-bold text-emerald-400 font-mono">
-                        +{item.quantity} units restored
-                      </span>
-                    </div>
+                    <p className="font-medium text-ink">{item.product?.productName}</p>
+                    <span className="px-2.5 py-0.5 rounded-full bg-sage-100 text-sage-700 text-xs font-semibold tabular-nums">
+                      +{item.quantity}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-500">No items detected for this order.</p>
+              <p className="text-sm text-ink-faint">No items found for this order.</p>
             )}
 
-            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <p className="font-semibold text-slate-300">Engine Behavior on Cancel:</p>
-              <p>&bull; <code>products.stock_qty</code> increases by each item&apos;s quantity.</p>
-              <p>&bull; <code>orders.status</code> transitions to <code>&apos;Cancelled&apos;</code>.</p>
-              <p>&bull; <code>payments.payment_status</code> transitions to <code>&apos;Refunded&apos;</code>.</p>
-            </div>
+            <p className="text-sm text-ink-soft">
+              The <code>cancel_order</code> procedure restores each item's quantity, marks the
+              order cancelled, and updates the payment status.
+            </p>
           </div>
         </div>
       )}
