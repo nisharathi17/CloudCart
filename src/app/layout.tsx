@@ -30,10 +30,7 @@ export default function RootLayout({
                 <strong>PL/pgSQL Triggers</strong>,{' '}
                 <strong>Prisma ORM</strong>, and <strong>Next.js</strong>.
               </p>
-              <p className="text-slate-400">
-                Developed by <strong>Nisha Rathi</strong> (24BYB0137) &amp;{' '}
-                <strong>Anshul Gupta</strong> (24BYB0149)
-              </p>
+              
             </div>
           </footer>
         </AuthProvider>

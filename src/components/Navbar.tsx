@@ -2,32 +2,40 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { Database, ShoppingCart, XCircle, BarChart3, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Database, ShoppingCart, XCircle, BarChart3, LogIn, LogOut } from 'lucide-react';
+import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [initLoading, setInitLoading] = useState(false);
-  const [initMessage, setInitMessage] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const handleInitDb = async () => {
-    if (!confirm('This will recreate tables, install triggers/procedures, and reseed initial data. Continue?')) return;
-    setInitLoading(true);
-    setInitMessage(null);
-    try {
-      const res = await fetch('/api/db/init', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        setInitMessage('Database Initialized!');
-        setTimeout(() => window.location.reload(), 1200);
-      } else {
-        alert('Init failed: ' + (data.details || data.error));
+  // Find out who is signed in, and update whenever someone signs in or out
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setUserEmail(user.signInDetails?.loginId ?? user.username);
+      } catch {
+        setUserEmail(null); // nobody is signed in
       }
-    } catch (err: any) {
-      alert('Init failed: ' + err.message);
-    } finally {
-      setInitLoading(false);
-    }
+    };
+
+    loadUser();
+
+    const stopListening = Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signedIn' || payload.event === 'signedOut') {
+        loadUser();
+      }
+    });
+
+    return stopListening;
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = '/';
   };
 
   const navLinks = [
@@ -41,7 +49,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo & Academic Info */}
+          {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-teal-500/20 border border-teal-500/40 rounded-lg text-teal-400">
               <Database className="w-6 h-6" />
@@ -50,10 +58,8 @@ export default function Navbar() {
               <Link href="/" className="font-bold text-lg text-white hover:text-teal-400 transition-colors">
                 E-Commerce DBMS
               </Link>
-              <div className="text-xs text-slate-400 flex items-center space-x-2">
+              <div className="text-xs text-slate-400">
                 <span>PostgreSQL 3NF + Prisma ORM</span>
-                <span>•</span>
-                <span className="text-teal-300 font-medium">Nisha Rathi (24BYB0137) & Anshul Gupta (24BYB0149)</span>
               </div>
             </div>
           </div>
@@ -80,21 +86,27 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Quick 1-Click Init DB Button */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleInitDb}
-              disabled={initLoading}
-              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-teal-600 hover:bg-teal-500 text-white shadow transition-all disabled:opacity-50"
-              title="Executes schema.sql, procedures_triggers.sql, and seed.sql"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${initLoading ? 'animate-spin' : ''}`} />
-              <span>{initLoading ? 'Resetting DB...' : 'Reset & Seed DB'}</span>
-            </button>
-            {initMessage && (
-              <span className="flex items-center text-xs text-green-400">
-                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> {initMessage}
-              </span>
+          {/* Login / Sign out */}
+          <div className="flex items-center space-x-3">
+            {userEmail ? (
+              <>
+                <span className="hidden lg:inline text-xs text-slate-400">{userEmail}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-700 hover:bg-slate-600 text-white shadow transition-all"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign out</span>
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-teal-600 hover:bg-teal-500 text-white shadow transition-all"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
+              </Link>
             )}
           </div>
         </div>
