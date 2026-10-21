@@ -178,6 +178,7 @@ export default function DashboardPage() {
           <table className="w-full text-left text-sm text-slate-300">
             <thead className="text-xs uppercase bg-slate-950/60 text-slate-400 border-b border-slate-800">
               <tr>
+                <th className="px-4 py-3">Image</th>
                 <th className="px-4 py-3">ID</th>
                 <th className="px-4 py-3">Product Name</th>
                 <th className="px-4 py-3">Category</th>
@@ -192,13 +193,23 @@ export default function DashboardPage() {
                 const isOutOfStock = prod.stockQty === 0;
                 return (
                   <tr key={prod.productId} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-4 py-3 font-semibold text-slate-400">#{prod.productId}</td>
-                    <td className="px-4 py-3 font-sans font-medium text-slate-100">{prod.productName}</td>
-                    <td className="px-4 py-3 font-sans text-slate-400">{prod.category?.categoryName}</td>
-                    <td className="px-4 py-3 text-right text-emerald-400 font-semibold">{formatCurrency(prod.price)}</td>
-                    <td className="px-4 py-3 text-right font-bold text-slate-200">{prod.stockQty}</td>
-                    <td className="px-4 py-3 text-center">
-                      {isOutOfStock ? (
+                  <td className="px-4 py-3">
+                    <img
+                    src={`/images/products/${prod.productId}.jpg`}
+                    alt={prod.productName}
+                    className="w-10 h-10 rounded object-cover bg-slate-800"
+                    onError={(e) => {
+                      e.currentTarget.style.visibility = "hidden";
+                    }}
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-slate-400">#{prod.productId}</td>
+                  <td className="px-4 py-3 font-sans font-medium text-slate-100">{prod.productName}</td>
+                  <td className="px-4 py-3 font-sans text-slate-400">{prod.category?.categoryName}</td>
+                  <td className="px-4 py-3 text-right text-emerald-400 font-semibold">{formatCurrency(prod.price)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-slate-200">{prod.stockQty}</td>
+                  <td className="px-4 py-3 text-center">
+                    {isOutOfStock ? (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
                           OUT OF STOCK
                         </span>
