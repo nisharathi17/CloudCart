@@ -3,6 +3,16 @@
 import { useState, useEffect } from 'react';
 import { XCircle, CheckCircle2, RotateCcw, AlertCircle, Package } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { fetchAuthSession } from 'aws-amplify/auth';
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const session = await fetchAuthSession();
+  const accessToken = session.tokens?.accessToken?.toString();
+  const idToken = session.tokens?.idToken?.toString();
+  return accessToken && idToken
+    ? { Authorization: `Bearer ${accessToken}`, 'x-id-token': idToken }
+    : {};
+}
 
 export default function CancelOrderPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -13,9 +23,11 @@ export default function CancelOrderPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/orders');
+            const res = await fetch('/api/orders', { headers: await authHeaders() });
       const data = await res.json();
-      const activeOrders = data.filter((o: any) => o.status !== 'Cancelled');
+      const activeOrders = Array.isArray(data)
+        ? data.filter((o: any) => o.status !== 'Cancelled')
+        : [];
       setOrders(activeOrders);
       if (activeOrders.length > 0 && selectedOrderId === '') {
         setSelectedOrderId(activeOrders[0].orderId);
@@ -38,8 +50,9 @@ export default function CancelOrderPage() {
     setErrorMessage(null);
 
     try {
-      const res = await fetch(`/api/orders/${selectedOrderId}/cancel`, {
+            const res = await fetch(`/api/orders/${selectedOrderId}/cancel`, {
         method: 'POST',
+        headers: await authHeaders(),
       });
       const data = await res.json();
 
